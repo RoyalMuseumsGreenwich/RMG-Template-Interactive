@@ -15,64 +15,69 @@ gulp.task('message', () => {
 });
 
 //	Copy all HTML files from 'src' to 'dist' (creates new folder if it doesn't already exist)
-gulp.task('copyHtml', () => {
+gulp.task('copyHtml', (done) => {
 	gulp.src(rootDirs.src + '*.html')
 		.pipe(gulp.dest(rootDirs.dist));
-});
-
-//	Scripts
-gulp.task('scripts', () => {
-	gulp.src(rootDirs.src + 'js/*.js')
-		// .pipe(concat('main.js'))
-		// .pipe(uglify())
-		.pipe(gulp.dest(rootDirs.dist + 'js'));
-});
-
-gulp.task('lib', () => {
-	gulp.src(rootDirs.src + 'lib/*.*')
-		.pipe(gulp.dest(rootDirs.dist + 'lib'));
+		done();
 });
 
 //	Compile Sass
-gulp.task('sass', () => {
+gulp.task('sass', (done) => {
 	gulp.src(rootDirs.src + 'sass/*.scss')
 		.pipe(sass().on('error', sass.logError))
 		.pipe(gulp.dest(rootDirs.dist + 'css'))
 		.pipe(browserSync.reload({
 			stream: true
 		}));
+		done();
 });
+
+//	Scripts
+gulp.task('scripts', (done) => {
+	gulp.src(rootDirs.src + 'js/*.js')
+		// .pipe(concat('main.js'))
+		// .pipe(uglify())
+		.pipe(gulp.dest(rootDirs.dist + 'js'));
+		done();
+});
+
+gulp.task('lib', (done) => {
+	gulp.src(rootDirs.src + 'lib/*.*')
+		.pipe(gulp.dest(rootDirs.dist + 'lib'));
+		done();
+});
+
 
 //	Trigger browserSync reload on change events
-gulp.task('watch-html', ['copyHtml'], (done) => {
+gulp.task('watch-html', gulp.series(['copyHtml'], (done) => {
 	browserSync.reload();
 	done();
-});
-gulp.task('watch-sass', ['sass'], (done) => {
+}));
+gulp.task('watch-sass', gulp.series(['sass'], (done) => {
 	browserSync.reload();
 	done();
-});
-gulp.task('watch-js', ['scripts'], (done) => {
+}));
+gulp.task('watch-js', gulp.series(['scripts'], (done) => {
 	browserSync.reload();
 	done();
-});
-gulp.task('watch-lib', ['lib'], (done) => {
+}));
+gulp.task('watch-lib', gulp.series(['lib'], (done) => {
 	browserSync.reload();
 	done();
-});
+}));
 
 //	Main task - run ~$ gulp to run task array, start browserSync and watch for further changes
-gulp.task('default', ['sass', 'scripts', 'copyHtml', 'lib'], () => {
+gulp.task('default', gulp.series(['copyHtml', 'sass', 'scripts', 'lib'], () => {
 	browserSync.init({
 		server: {
 			baseDir: rootDirs.dist
 		}
 	});
-	gulp.watch(rootDirs.src + 'js/*.js', ['watch-js']);
-	gulp.watch(rootDirs.src + 'lib/**/*.*', ['watch-lib']);
-	gulp.watch(rootDirs.src + 'sass/*.scss', ['watch-sass']);
-	gulp.watch(rootDirs.src + '*.html', ['watch-html']);
-});
+	gulp.watch(rootDirs.src + '*.html', gulp.series('watch-html'));
+	gulp.watch(rootDirs.src + 'sass/*.scss', gulp.series('watch-sass'));
+	gulp.watch(rootDirs.src + 'js/*.js', gulp.series('watch-js'));
+	gulp.watch(rootDirs.src + 'lib/**/*.*', gulp.series('watch-lib'));
+}));
 
 
 //	*******************************************************************
