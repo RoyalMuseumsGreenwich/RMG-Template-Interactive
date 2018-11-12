@@ -1,9 +1,9 @@
-const gulp = require('gulp');
-const sass = require('gulp-sass');
-const concat = require('gulp-concat');
-const uglify = require('gulp-uglify');
-const del = require('del');
-const browserSync = require('browser-sync').create();
+const gulp 					= require('gulp');
+const sass 					= require('gulp-sass');
+const concat 				= require('gulp-concat');
+const uglify 				= require('gulp-uglify');
+const del 					= require('del');
+const browserSync 	= require('browser-sync').create();
 
 var kiosk;						//	Flag to set when compiling for 'kiosk production' with $ gulp kiosk
 
@@ -18,7 +18,7 @@ gulp.task('message', () => {
 });
 
 //	Copy all HTML files from 'src' to 'dist' (creates new folder if it doesn't already exist)
-gulp.task('copyHtml', (done) => {
+gulp.task('html', (done) => {
 	gulp.src(rootDirs.src + '*.html')
 		.pipe(gulp.dest(rootDirs.dist));
 		done();
@@ -47,35 +47,58 @@ gulp.task('scripts', (done) => {
 });
 
 gulp.task('lib', (done) => {
-	gulp.src(rootDirs.src + 'lib/*.*')
+	gulp.src(rootDirs.src + 'lib/**/*')
 		.pipe(gulp.dest(rootDirs.dist + 'lib'));
 		done();
 });
 
+gulp.task('clean-dist', (done) => {
+	return del([rootDirs.dist + '**/*'])
+});
+gulp.task('clean-html', (done) => {
+	return del([rootDirs.dist + '/*.html'])
+});
+gulp.task('clean-css', (done) => {
+	return del([rootDirs.dist + 'css/**/*'])
+});
+gulp.task('clean-js', (done) => {
+	return del([rootDirs.dist + 'js/**/*'])
+});
+gulp.task('clean-lib', (done) => {
+	return del([rootDirs.dist + 'lib/**/*'])
+});
 
 //	Trigger browserSync reload on change events
-gulp.task('watch-html', gulp.series(['copyHtml'], (done) => {
+gulp.task('watch-html', gulp.series('clean-html', 'html', (done) => {
 	browserSync.reload();
 	done();
 }));
-gulp.task('watch-sass', gulp.series(['sass'], (done) => {
+gulp.task('watch-sass', gulp.series('clean-css', 'sass', (done) => {
 	browserSync.reload();
 	done();
 }));
-gulp.task('watch-js', gulp.series(['scripts'], (done) => {
+gulp.task('watch-js', gulp.series('clean-js', 'scripts', (done) => {
 	browserSync.reload();
 	done();
 }));
-gulp.task('watch-lib', gulp.series(['lib'], (done) => {
+gulp.task('watch-lib', gulp.series('clean-lib', 'lib', (done) => {
 	browserSync.reload();
 	done();
 }));
 
 //	Main task - run ~$ gulp to run task array, start browserSync and watch for further changes
-gulp.task('default', gulp.series((done) => {kiosk = false; done();}, ['copyHtml', 'sass', 'scripts', 'lib'], browserSyncWatch));
+gulp.task('default', gulp.series(
+	(done) => {kiosk = false; done();},
+	'clean-dist',
+	['html', 'sass', 'scripts', 'lib'], 
+	browserSyncWatch));
 
 //	Build for kiosk mode
-gulp.task('kiosk', gulp.series((done) => {kiosk = true; done();}, ['copyHtml', 'sass', 'scripts', 'lib'], browserSyncWatch));
+gulp.task('kiosk', gulp.series(
+	(done) => {kiosk = true; done();}, 
+	'clean-dist',
+	['html', 'sass', 'scripts', 'lib'], 
+	browserSyncWatch));
 
 
 function browserSyncWatch() {
@@ -86,8 +109,8 @@ function browserSyncWatch() {
 	});
 	gulp.watch(rootDirs.src + '*.html', gulp.series('watch-html'));
 	gulp.watch(rootDirs.src + 'sass/*.scss', gulp.series('watch-sass'));
-	gulp.watch(rootDirs.src + 'js/*.js', gulp.series('watch-js'));
-	gulp.watch(rootDirs.src + 'lib/**/*.*', gulp.series('watch-lib'));
+	gulp.watch(rootDirs.src + 'js/**/*', gulp.series('watch-js'));
+	gulp.watch(rootDirs.src + 'lib/**/*', gulp.series('watch-lib'));
 }
 
 

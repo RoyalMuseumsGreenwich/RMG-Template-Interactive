@@ -1,2 +1,6 @@
-//	Dev comment!
-console.log("Connected!");
+$(() => {
+
+	//	Dev comment!
+	console.log("Connected!");
+
+});
